@@ -3,9 +3,7 @@ from loggers import server_logger
 import spotipy
 import subprocess
 import numpy
-import pyaudio
-import time
-
+import datetime
 
 
 
@@ -42,28 +40,13 @@ while raw_audio != '':
     frames.append(audio_array)
 
 
-#
-# p = pyaudio.PyAudio()
-#
-# stream = p.open(format=pyaudio.paInt16,
-#                 channels=2,
-#                 rate=44100,
-#                 output=True)
-
-
-# for current_frame in frames:
-#     stream.write(current_frame.astype(numpy.int16).tostring())
-
-
-
-
-
 HOST = '127.0.0.1'    # The remote host
 PORT = 50023              # The same port as used by the server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
 
 for current_frame in frames:
+    play_timestamp = datetime.datetime.now() + datetime.timedelta(seconds=20)
     s.sendall(current_frame.astype(numpy.int16).tostring())
 
 s.close()
