@@ -37,7 +37,7 @@ def play_audio_frames():
 
 def process_audio():
     print("processing audio")
-    audio_thread = thread.start_new_thread(play_audio_frames)
+    audio_thread = thread.start_new_thread(play_audio_frames, ())
 
 
 def create_server_socket():
