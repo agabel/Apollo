@@ -3,7 +3,7 @@ import numpy
 import thread
 import pyaudio
 
-HOST = ''
+HOST = '192.168.22.109'
 PORT = 50025
 
 _CONNECTIONS = {}
@@ -33,13 +33,15 @@ def process_audio():
 def start_server():
     ADDR = (HOST, PORT)
     serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    #serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     serversock.bind(ADDR)
     serversock.listen(5)
     conn, addr = serversock.accept()
+    print("Accepting connections")
     while True:
         data = conn.recv(chunk_size)
         if data != '':
+            print("Received data")
             audio_array = numpy.fromstring(data, dtype=numpy.int16)
             audio_array = audio_array.reshape((len(audio_array)/2, 2))
             FRAMES.append(audio_array)

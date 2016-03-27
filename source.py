@@ -16,7 +16,7 @@ bytes_per_sample = numpy.dtype(numpy.int16).itemsize
 frame_size = bytes_per_sample * channels
 chunk_size = frame_size * sample_rate
 
-HOST = '127.0.0.1'
+HOST = '192.168.22.109'
 PORT = 50025
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
