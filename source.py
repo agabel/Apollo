@@ -1,55 +1,41 @@
+import datetime
+import numpy
 import socket
-from loggers import server_logger
 import spotipy
 import subprocess
-import numpy
-import datetime
-
-
 
 sp = spotipy.Spotify()
-
 results = sp.search(q='Thrift Shop Macklemore', limit=20)
-
-test_audio_url = results['tracks']['items'][0]['preview_url']
-
-input_file = '/Users/Austin/Desktop/passenger-let-her-go.mp3'
-
-
-command = [
-    '/usr/local/bin/ffmpeg',
-    '-i', input_file,
-    '-f', 's16le',
-    '-acodec', 'pcm_s16le',
-    '-ar', '44100',  # ouput will have 44100 Hz
-    '-ac', '2',  # stereo (set to '1' for mono)
-    '-'
-]
-
-pipe = subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=10**8)
-
+test_audio_url = results['tracks']['items'][0]['preview_url'].replace("https://", "http://")
 
 frames = []
-
 raw_audio = None
+channels = 2
+sample_rate = 44100
+bytes_per_sample = numpy.dtype(numpy.int16).itemsize
+frame_size = bytes_per_sample * channels
+chunk_size = frame_size * sample_rate
 
-while raw_audio != '':
-    raw_audio = pipe.stdout.read(88200*4)
-    audio_array = numpy.fromstring(raw_audio, dtype="int16")
-    audio_array = audio_array.reshape((len(audio_array)/2, 2))
-    frames.append(audio_array)
-
-
-HOST = '127.0.0.1'    # The remote host
-PORT = 50023              # The same port as used by the server
+HOST = '127.0.0.1'
+PORT = 50025
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
 
-for current_frame in frames:
-    play_timestamp = datetime.datetime.now() + datetime.timedelta(seconds=20)
-    s.sendall(current_frame.astype(numpy.int16).tostring())
+command = [
+    '/usr/local/bin/ffmpeg',
+    '-i', test_audio_url,
+    '-f', 's16le',
+    '-acodec', 'pcm_s16le',
+    '-ar', '44100',
+    '-ac', '2',
+    '-'
+]
+
+pipe = subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=chunk_size)
+
+while raw_audio != '':
+    raw_audio = pipe.stdout.read(chunk_size)
+    if raw_audio:
+        s.sendall(raw_audio)
 
 s.close()
-
-server_logger.info("Received data")
-

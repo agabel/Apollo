@@ -1,54 +1,33 @@
 import socket
 import numpy
-import pyaudio
 import thread
-import select
-
-
-from loggers import server_logger
+import pyaudio
 
 HOST = ''
-PORT = 50023
+PORT = 50025
 
 _CONNECTIONS = {}
 
 FRAMES = []
+channels = 2
+sample_rate = 44100
+bytes_per_sample = numpy.dtype(numpy.int16).itemsize
+frame_size = bytes_per_sample * channels
+chunk_size = frame_size * sample_rate
 
-
-class AudioStream():
-    stream = None
-
-    def __init__(self):
-        p = pyaudio.PyAudio()
-        self.stream = p.open(format=pyaudio.paInt16,
-                        channels=2,
-                        rate=44100,
-                        output=True)
-
-
-AUDIO_STREAM = AudioStream()
 
 def play_audio_frames():
+    audio = pyaudio.PyAudio()
+    stream = audio.open(format=pyaudio.paInt16, channels=2, rate=44100, output=True)
     while True:
-        if len(FRAMES):
-            print("playing audio frame")
-            frame = FRAMES.pop(0)
-            AUDIO_STREAM.stream.write(frame)
+        for frame in FRAMES:
+            audio_frame = frame.tostring()
+            stream.write(audio_frame)
+
 
 def process_audio():
     print("processing audio")
-    audio_thread = thread.start_new_thread(play_audio_frames, ())
-
-
-def create_server_socket():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind((HOST, PORT))
-    s.listen(1)
-    #s.setblocking(0)
-    print("Server listening...")
-
-    return s
+    thread.start_new_thread(play_audio_frames, ())
 
 
 def start_server():
@@ -59,13 +38,11 @@ def start_server():
     serversock.listen(5)
     conn, addr = serversock.accept()
     while True:
-        data = conn.recv(88200)
+        data = conn.recv(chunk_size)
         if data != '':
-            print("Received data")
-            try:
-                FRAMES.append(data)
-            except Exception as e:
-                print(e)
+            audio_array = numpy.fromstring(data, dtype=numpy.int16)
+            audio_array = audio_array.reshape((len(audio_array)/2, 2))
+            FRAMES.append(audio_array)
 
 if __name__ == "__main__":
     process_audio()
