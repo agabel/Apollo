@@ -21,9 +21,9 @@ def play_audio_frames():
     stream = audio.open(format=pyaudio.paInt16, channels=2, rate=44100, output=True)
     while True:
         for frame in FRAMES:
-            audio_frame = frame.tostring()
-            stream.write(audio_frame)
-
+            #audio_frame = frame.tostring()
+            #stream.write(audio_frame)
+            stream.write(frame)
 
 def process_audio():
     print("processing audio")
@@ -42,9 +42,10 @@ def start_server():
         data = conn.recv(chunk_size)
         if data != '':
             print("Received data")
-            audio_array = numpy.fromstring(data, dtype=numpy.int16)
-            audio_array = audio_array.reshape((len(audio_array)/2, 2))
-            FRAMES.append(audio_array)
+            # audio_array = numpy.fromstring(data, dtype=numpy.int16)
+            # audio_array = audio_array.reshape((len(audio_array)/2, 2))
+            # FRAMES.append(audio_array)
+            FRAMES.append(data)
 
 if __name__ == "__main__":
     process_audio()
